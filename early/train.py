@@ -245,6 +245,8 @@ for epoch in range(start_epoch, epochs):
             'best_loss': best_loss
         }, CKPT_NAME)
         cnt = 0
+    else:
+        cnt += 1
 
     if (epoch + 1) % print_every == 0:
         tX, tY = random.choice(list(zip(train_X, train_Y)))
