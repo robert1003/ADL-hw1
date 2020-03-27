@@ -8,14 +8,14 @@ import sys
 BATCH_SIZE = 512
 TEST_FILE_PATH = sys.argv[1]
 PREDICTION_FILE_PATH = sys.argv[2]
-EMBEDDING_FILE_PATH = '../word2vec.pickle'#'../embeddings/numberbatch-en-19.08.txt'
+EMBEDDING_FILE_PATH = 'word2vec.pickle'#'../embeddings/numberbatch-en-19.08.txt'
 EMBEDDING_DIM = 300
 MIN_DISCARD_LEN = 5
 
 INPUT_LEN = 251
 TARGET_LEN = 30
 
-pretrained_ckpt = 'model.ckpt'
+pretrained_ckpt = 'early/model.ckpt'
 
 device = 'cuda'
 
