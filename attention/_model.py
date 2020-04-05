@@ -88,14 +88,17 @@ class Seq2seq(nn.Module):
                     elif 'bias' in name:
                         param.data.fill_(0)
         
-    def forward(self, input, hidden, batch_size, encoding, enc_outputs):
+    def forward(self, input, hidden, batch_size, encoding, enc_outputs, return_attn=False):
         if encoding:
             input = self.embedding(input).view(input.size(0), batch_size, -1)
             output, hidden = self.encoder(input, hidden)
             return output, hidden
         else:
             input = self.dropout(self.embedding(input).view(1, batch_size, -1))
-            _, context_vec = self.attention(hidden, enc_outputs) # (1, batch, hidden_size * num_layers * num_directions)
+            attn_weights, context_vec = self.attention(hidden, enc_outputs) # (1, batch, hidden_size * num_layers * num_directions)
             #concat_input = torch.cat((input, context_vec), dim=2)
             output, hidden = self.decoder(input, hidden, context_vec)
-            return output, hidden
+            if return_attn:
+                return output, hidden, attn_weights
+            else:
+                return output, hidden

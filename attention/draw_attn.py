@@ -1,19 +1,20 @@
 # setup environment
-import os
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+#import os
+#os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
+#os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 # hyperparams
 import sys
-BATCH_SIZE = 128
-TEST_FILE_PATH = sys.argv[1]
-PREDICTION_FILE_PATH = sys.argv[2]
+BATCH_SIZE = 32
+VALID_FILE_PATH = sys.argv[1]
+PIC_FILE_PATH = sys.argv[2]
 EMBEDDING_SAVE_PATH = 'word2vec_attention.pickle'#'../embeddings/numberbatch-en-19.08.txt'
 EMBEDDING_DIM = 300
 MIN_DISCARD_LEN = 'inf'
 
 INPUT_LEN = 251
 TARGET_LEN = 40
+bid, tid = 4, 8
 
 pretrained_ckpt = 'attention/model_best_rouge1.ckpt'
 
@@ -22,7 +23,7 @@ device = 'cuda'
 # read data
 print('reading data...')
 from _utils import read_jsonl
-test_X, _, idx_X = read_jsonl(TEST_FILE_PATH, False, True)
+valid_X, _, idx_X = read_jsonl(VALID_FILE_PATH, False, True)
 print('done')
 
 # load pretrained word embedding
@@ -38,16 +39,15 @@ UNK_token = word2vec.word2idx['<UNK>']
 print('done')
 
 # transform sentences to embedding
-print('test_X')
-test_X = word2vec.sent2idx(test_X, INPUT_LEN)
+print('valid_X')
+valid_X = word2vec.sent2idx(valid_X, INPUT_LEN)
 
 # convert them to dataset and dataloader
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
-test_dataset = TensorDataset(torch.from_numpy(test_X))
-
-test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+valid_dataset = TensorDataset(torch.from_numpy(valid_X))
+valid_loader = DataLoader(valid_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 # build model
 from _model import EncoderRNN, DecoderRNN, Attention, Seq2seq
@@ -93,6 +93,7 @@ def predict(input_tensor):
     input_tensor = input_tensor.transpose(0, 1).to(device)
     input_length = input_tensor.size(0)
 
+    #encoder_output, encoder_hidden = encoder(input_tensor, encoder_hidden)
     enc_outputs, encoder_hidden = model(input_tensor, encoder_hidden, batch_size, encoding=True, enc_outputs=None)
 
     decoder_input = torch.LongTensor([SOS_token for _ in range(batch_size)]).view(-1, 1).to(device)
@@ -100,32 +101,48 @@ def predict(input_tensor):
     decoder_hidden = torch.cat((encoder_hidden[:, 0, :, :], encoder_hidden[:, 1, :, :]), dim=2)
 
     decoder_predict = []
+    attn_weights = []
     for di in range(TARGET_LEN):
-        decoder_output, decoder_hidden = model(decoder_input, decoder_hidden, batch_size, encoding=False, enc_outputs=enc_outputs)
+        decoder_output, decoder_hidden, weight = model(decoder_input, decoder_hidden, batch_size, encoding=False, enc_outputs=enc_outputs, return_attn=True)
         topv, topi = decoder_output.data.topk(1)
         decoder_input = topi.detach().to(device)
 
+        attn_weights.append(weight.detach().cpu().numpy())
         decoder_predict.append(topi.cpu().numpy())
 
-    return np.hstack(decoder_predict)
+    return np.hstack(decoder_predict), np.stack(attn_weights)
 
-# predict
-print('predicting...')
-predictions = []
-for i, x in enumerate(test_loader):
-    prediction = predict(x[0])
-    predictions.append(prediction)
-predictions = np.vstack(predictions)
-print('done')
+# draw pic
+from _utils import idx2words
+for i, x in enumerate(valid_loader):
+    if i == bid:
+        break
+        
+x = x[0]
+pred, weig = predict(x)
+weig = weig.squeeze(3)
 
-# print to file
-import json
-from _utils import trim, remove_dupes
-with open(PREDICTION_FILE_PATH, 'w') as f:
-    for pred, idx in zip(predictions, idx_X):
-        pred = trim(pred.reshape(1, -1), word2vec)
-        pred = pred.replace('<PAD> ', '').replace(' <PAD>', '').replace('<UNK> ', '').replace(' <UNK>', '')
-        pred = remove_dupes(pred)
-        output = {'id':str(idx), 'predict':pred}
-        s = json.dumps(output)
-        print(s, file=f)
+xx = idx2words(x[tid:tid + 1].numpy(), word2vec)[0]
+xidx = xx.index('<EOS>')
+print('input', xx[:xidx])
+
+yy = idx2words(pred[tid:tid + 1], word2vec)[0]
+yidx = yy.index('<EOS>')
+print('predict', yy[:yidx])
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+fig = plt.figure(figsize=(30, 10))
+ax = fig.add_subplot(111)
+cax = ax.matshow(weig[:yidx, tid, :xidx])
+fig.colorbar(cax)
+
+ax.set_xticklabels(xx[:xidx], rotation=90, fontsize=15)
+ax.set_yticklabels(yy[:yidx], fontsize='large')
+
+ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+
+plt.savefig(PIC_FILE_PATH, bbox_inches='tight')
