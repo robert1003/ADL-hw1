@@ -74,3 +74,31 @@ def print_words(name, input, target, predict, word2vec):
     predict = trim(predict, word2vec)
 
     print(f'----------{name}----------\n input:::: {input}\n target:::: {target}\n predict:::: {predict}\n score:::: {scorer.score(target, predict)}')
+
+def write_prediction(fp, prediction, ids, word2vec, remove_dup=True):
+    with open(fp, 'w') as f:
+        for y, idx in zip(prediction, ids):
+            y = trim(y.reshape(1, -1), word2vec).replace('<PAD> ', '').replace(' <PAD>', '').replace('<UNK> ', '').replace(' <UNK>', '')
+            if remove_dup:
+                y = remove_dupes(y)
+            mp = {"id":str(idx), "predict":y}
+            s = json.dumps(mp)
+            print(s, file=f) 
+    
+from itertools import groupby
+import string
+
+def mysplit(s, c, start):
+    assert 0 < start <= c
+    s = s.split()
+    res = []
+    res.append(' '.join(s[:start]))
+    for i in range(start, len(s), c):
+        res.append(' '.join(s[i:i + c]))
+    return res
+
+def remove_dupes(s, c=20):
+    for j in range(c):
+        for i in range(j):
+            s = [k for k, v in groupby(mysplit(s, j, i + 1))]
+            s = ' '.join(s)

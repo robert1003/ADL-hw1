@@ -75,11 +75,12 @@ def print_words(name, input, target, predict, f, word2vec):
 
     print(f'----------{name}----------\n input:::: {input}\n target:::: {target}\n predict:::: {predict}\n score:::: {scorer.score(target, predict)}', file=f)
 
-def write_prediction(fp, prediction, ids, word2vec):
+def write_prediction(fp, prediction, ids, word2vec, remove_dup=True):
     with open(fp, 'w') as f:
         for y, idx in zip(prediction, ids):
             y = trim(y.reshape(1, -1), word2vec).replace('<PAD> ', '').replace(' <PAD>', '').replace('<UNK> ', '').replace(' <UNK>', '')
-            y = remove_dupes(y)
+            if remove_dup:
+                y = remove_dupes(y)
             mp = {"id":str(idx), "predict":y}
             s = json.dumps(mp)
             print(s, file=f) 
