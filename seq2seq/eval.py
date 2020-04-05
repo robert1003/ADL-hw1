@@ -8,7 +8,7 @@ import sys
 BATCH_SIZE = 512
 TEST_FILE_PATH = sys.argv[1]
 PREDICTION_FILE_PATH = sys.argv[2]
-EMBEDDING_FILE_PATH = 'word2vec.pickle'#'../embeddings/numberbatch-en-19.08.txt'
+EMBEDDING_SAVE_PATH = 'word2vec_seq2seq.pickle'#'../embeddings/numberbatch-en-19.08.txt'
 EMBEDDING_DIM = 300
 MIN_DISCARD_LEN = 5
 
@@ -28,11 +28,7 @@ print('done')
 # load pretrained word embedding
 print('loading word embedding...')
 from _word2vec import Word2Vec
-import pickle
-
-with open(EMBEDDING_FILE_PATH, 'rb') as f:
-    word2vec = pickle.load(f)
-
+word2vec = Word2Vec(EMBEDDING_SAVE_PATH, 300, raw=False)
 embedding = word2vec.embedding
 
 SOS_token = word2vec.word2idx['<SOS>']
@@ -70,8 +66,6 @@ criterion = nn.NLLLoss(ignore_index=PAD_token)
 print('loading pretrained model...')
 checkpoint = torch.load(pretrained_ckpt)
 model.load_state_dict(checkpoint['model_state_dict'])
-optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-criterion = checkpoint['criterion']
 print('done')
 
 # define predict

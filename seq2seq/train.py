@@ -5,10 +5,12 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 # hyperparams
 BATCH_SIZE = 128
-TRAIN_FILE_PATH = '../data/train.jsonl'
-VALID_FILE_PATH = '../data/valid.jsonl'
-TEST_FILE_PATH = '../data/test.jsonl'
-EMBEDDING_FILE_PATH = '../embeddings/numberbatch-en-19.08.txt'
+TRAIN_FILE_PATH = 'data/train.jsonl'
+VALID_FILE_PATH = 'data/valid.jsonl'
+TEST_FILE_PATH = 'data/test.jsonl'
+EXTRACTIVE_SCORER_PATH = 'scorer/scorer_generative.py'
+EMBEDDING_FILE_PATH = 'embeddings/numberbatch-en-19.08.txt'
+EMBEDDING_SAVE_PATH = 'word2vec_seq2seq.pickle'
 EMBEDDING_DIM = 300
 MIN_DISCARD_LEN = 5
 
@@ -16,10 +18,9 @@ INPUT_LEN = 251
 TARGET_LEN = 30
 
 teacher_forcing_ratio = 0.5
-pretrained_ckpt = None#'model.ckpt'
-print_every = 5
 GRAD_MAX = 5
-CKPT_NAME = 'modelt.ckpt'
+CKPT_VALID_NAME = 'seq2seq/model_best_loss.ckpt'
+CKPT_NAME = 'seq2seq/model.ckpt'
 
 device = 'cuda'
 
@@ -45,8 +46,12 @@ print('done')
 
 # dump word2vec object
 import pickle
-with open('word2vec.pickle', 'wb') as f:
-    pickle.dump(word2vec, f)
+with open(EMBEDDING_SAVE_PATH, 'wb') as f:
+    tmp = {}
+    tmp['embedding'] = word2vec.embedding
+    tmp['word2idx'] = word2vec.word2idx
+    tmp['idx2word'] = word2vec.idx2word
+    pickle.dump(tmp, f)
 
 # transform sentences to embedding
 print('train_X')
@@ -202,16 +207,6 @@ patience = 1000
 cnt = 0
 best_loss = np.inf
 
-if pretrained_ckpt is not None:
-    print('loading pretrained model...')
-    checkpoint = torch.load(pretrained_ckpt)
-    start_epoch = checkpoint['epoch']
-    model.load_state_dict(checkpoint['model_state_dict'])
-    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    criterion = checkpoint['criterion']
-    best_loss = checkpoint['best_loss']
-    print('done')
-
 print('start training!')
 for epoch in range(start_epoch, epochs):
     total_loss = 0
@@ -240,26 +235,26 @@ for epoch in range(start_epoch, epochs):
             'optimizer_state_dict': optimizer.state_dict(),
             'criterion': criterion,
             'best_loss': best_loss
-        }, 'model_best_val.ckpt')
+        }, CKPT_VALID_NAME)
         cnt = 0
     else:
         cnt += 1
 
-    if (epoch + 1) % print_every == 0:
+    if (epoch + 1) % 1 == 0:
         tX, tY = random.choice(list(zip(train_X, train_Y)))
         pt = predict(torch.from_numpy(tX).view(1, -1))
-        print_words('train', tX.reshape(1, -1), tY.reshape(1, -1), pt)
+        print_words('train', tX.reshape(1, -1), tY.reshape(1, -1), pt, word2vec)
 
         vX, vY = random.choice(list(zip(valid_X, valid_Y)))
         pv = predict(torch.from_numpy(vX).view(1, -1))
-        print_words('valid', vX.reshape(1, -1), vY.reshape(1, -1), pv)
+        print_words('valid', vX.reshape(1, -1), vY.reshape(1, -1), pv, word2vec)
 
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'criterion': criterion
-        }, 'model.ckpt')
+        }, CKPT_NAME)
 
     if cnt > patience:
         print('done training')

@@ -55,7 +55,7 @@ def timeSince(since, epoch, epochs):
     now = time.time()
     s = now - since
     rs = s / epoch * (epochs - epoch)
-    return '%s (- %s)' % (asMinutes(s), asMinutes(rs))
+    return '%s (- %s)' % (_asMinutes(s), _asMinutes(rs))
 
 from rouge_score import rouge_scorer
 scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=False)
