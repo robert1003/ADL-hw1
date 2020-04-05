@@ -1,20 +1,20 @@
 # setup environment
-#import os
+import os
 #os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
 #os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 # hyperparams
 import sys
-BATCH_SIZE = 512
+BATCH_SIZE = 256
 TEST_FILE_PATH = sys.argv[1]
 PREDICTION_FILE_PATH = sys.argv[2]
-EMBEDDING_FILE_PATH = 'word2vec_extractive.pickle'#'../embeddings/numberbatch-en-19.08.txt'
+EMBEDDING_SAVE_PATH = 'word2vec_extractive.pickle'#'../embeddings/numberbatch-en-19.08.txt'
 EMBEDDING_DIM = 300
 MIN_DISCARD_LEN = 2
 
 INPUT_LEN = 301
 
-pretrained_ckpt = 'extractive/model_extractive_best_rogue1.ckpt'
+pretrained_ckpt = 'extractive/model_best_rouge1.ckpt'
 
 device = 'cuda'
 
@@ -27,11 +27,7 @@ print('done')
 # load pretrained word embedding
 print('loading word embedding...')
 from _word2vec import Word2Vec
-import pickle
-
-with open(EMBEDDING_FILE_PATH, 'rb') as f:
-    word2vec = pickle.load(f)
-
+word2vec = Word2Vec(EMBEDDING_SAVE_PATH, 300, raw=False)
 embedding = word2vec.embedding
 
 SOS_token = word2vec.word2idx['<SOS>']
@@ -40,7 +36,7 @@ PAD_token = word2vec.word2idx['<PAD>']
 UNK_token = word2vec.word2idx['<UNK>']
 print('done')
 
-# transform sentences to embedding
+# transform sentences to embeddin4g
 print('test_X')
 test_X = word2vec.sent2idx(test_X, INPUT_LEN)
 

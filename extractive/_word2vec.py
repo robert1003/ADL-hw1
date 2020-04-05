@@ -1,13 +1,26 @@
 import numpy as np
+import pickle
 
 class Word2Vec:
     
-    def __init__(self, embedding_file, embedding_dim):
+    def __init__(self, embedding_file, embedding_dim, raw=True):
         self.embedding_dim = embedding_dim
-        self.embedding_index = self._loadModel(embedding_file)
+        if raw:
+            self.embedding_index = self._loadModel(embedding_file)
+        else:
+            self._loadEmbedding(embedding_file)
         
+    def _loadEmbedding(self, embedding_file):
+        print('Loading processed embedding...')
+        with open(embedding_file, 'rb') as f:
+            tmp = pickle.load(f)
+            self.embedding = tmp['embedding']
+            self.word2idx = tmp['word2idx']
+            self.idx2word = tmp['idx2word']
+        print('done')
+
     def _loadModel(self, embedding_file):
-        print("Loading Model", embedding_file)
+        print('Loading Model', embedding_file)
         model = {}
         miss_cnt = 0
         with open(embedding_file, 'r') as f:

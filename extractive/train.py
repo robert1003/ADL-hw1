@@ -5,20 +5,21 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 # set hyperparams
 BATCH_SIZE = 256
-TRAIN_FILE_PATH = '../data/train.jsonl'
-VALID_FILE_PATH = '../data/valid.jsonl'
-TEST_FILE_PATH = '../data/test.jsonl'
-TEMP_FILE_PATH = './ncj2adA.jsonl'
-EXTRACTIVE_SCORER_PATH = '../scorer/scorer_extractive.py'
-EMBEDDING_FILE_PATH = '../embeddings/numberbatch-en-19.08.txt'
+TRAIN_FILE_PATH = 'data/train.jsonl'
+VALID_FILE_PATH = 'data/valid.jsonl'
+TEST_FILE_PATH = 'data/test.jsonl'
+TEMP_FILE_PATH = 'extractive/ncj2adA.jsonl'
+EXTRACTIVE_SCORER_PATH = 'scorer/scorer_extractive.py'
+EMBEDDING_FILE_PATH = 'embeddings/numberbatch-en-19.08.txt'
+EMBEDDING_SAVE_PATH = 'word2vec_extractive.pickle'
 EMBEDDING_DIM = 300
 MIN_DISCARD_LEN = 2
 
 INPUT_LEN = 301
 
 GRAD_MAX = 1
-CKPT_NAME = 'model_extractive_best_rogue1.ckpt'
-
+CKPT_VALID_NAME = 'extractive/model_best_rouge1.ckpt'
+CKPT_NAME = 'extractive/model.ckpt'
 device = 'cuda'
 
 import random, torch
@@ -54,8 +55,12 @@ print('done')
 
 # dump word2vec object
 import pickle
-with open('word2vec_extrative.pickle', 'wb') as f:
-    pickle.dump(word2vec, f)
+with open(EMBEDDING_SAVE_PATH, 'wb') as f:
+    tmp = {}
+    tmp['embedding'] = word2vec.embedding
+    tmp['word2idx'] = word2vec.word2idx
+    tmp['idx2word'] = word2vec.idx2word
+    pickle.dump(tmp, f)
 
 # transform sentences to embedding
 print('train_X')
@@ -242,7 +247,7 @@ for epoch in range(epochs):
             'optimizer_state_dict': optimizer.state_dict(),
             'criterion': criterion,
             'best_rogue1': best_rogue1
-        }, 'model_extractive_best_rogue1.ckpt')
+        }, CKPT_VALID_NAME)
         cnt = 0
     else:
         cnt += 1
@@ -253,7 +258,7 @@ for epoch in range(epochs):
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'criterion': criterion
-        }, 'model_extractive.ckpt')
+        }, CKPT_NAME)
 
     if cnt > patience:
         print('done training')
