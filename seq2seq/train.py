@@ -8,7 +8,6 @@ BATCH_SIZE = 128
 TRAIN_FILE_PATH = 'data/train.jsonl'
 VALID_FILE_PATH = 'data/valid.jsonl'
 TEST_FILE_PATH = 'data/test.jsonl'
-EXTRACTIVE_SCORER_PATH = 'scorer/scorer_generative.py'
 EMBEDDING_FILE_PATH = 'embeddings/numberbatch-en-19.08.txt'
 EMBEDDING_SAVE_PATH = 'word2vec_seq2seq.pickle'
 EMBEDDING_DIM = 300
