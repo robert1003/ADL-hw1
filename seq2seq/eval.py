@@ -110,11 +110,12 @@ print('done')
 
 # print to file
 import json
-from _utils import trim
+from _utils import trim, remove_dupes
 with open(PREDICTION_FILE_PATH, 'w') as f:
     for pred, idx in zip(predictions, idx_X):
         pred = trim(pred.reshape(1, -1), word2vec)
         pred = pred.replace('<PAD> ', '').replace(' <PAD>', '').replace('<UNK> ', '').replace(' <UNK>', '')
+        pred = remove_dupes(pred)
         output = {'id':str(idx), 'predict':pred}
         s = json.dumps(output)
         print(s, file=f)

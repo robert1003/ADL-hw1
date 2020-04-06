@@ -102,3 +102,4 @@ def remove_dupes(s, c=20):
         for i in range(j):
             s = [k for k, v in groupby(mysplit(s, j, i + 1))]
             s = ' '.join(s)
+    return s
