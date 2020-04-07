@@ -145,4 +145,8 @@ ax.set_yticklabels(yy[:yidx], fontsize='large')
 ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
 ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
 
+ax.set_xlabel('text (processed)', fontsize=15)
+ax.xaxis.set_label_position('top')
+ax.set_ylabel('predicted summary', fontsize=15)
+
 plt.savefig(PIC_FILE_PATH, bbox_inches='tight')
