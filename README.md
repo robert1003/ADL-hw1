@@ -1,3 +1,19 @@
+# ADL hw1
+
+## Homework description
+
+* [Link](https://docs.google.com/presentation/d/1omvZRbcbpo1gQ2hlktPV9gZzuAfEHcsJa18IoytgQjk/edit#slide=id.g8130877143_0_0) to the homework slide.
+* [Link](https://www.youtube.com/watch?v=f1iXbnjK7pg&feature=youtu.be) to the homework video.
+* Links to the data
+  * On [Google Drive](https://drive.google.com/drive/folders/1L_ayPqKlm6KmimjTHvheLQgm2EZfajh4?usp=sharing)
+  * On CSIE workstations (you may use `ssh` and `scp` to access them as long as you have a CSIE account)
+    * linux1.csie.ntu.edu.tw:/tmp2/adl-hw1-data
+    * linux5.csie.ntu.edu.tw:/tmp2/adl-hw1-data
+* [Link](https://gist.github.com/adamlin120/8e5278cc840c137818146d151e7067e8) to the evaluation scripts. (Updated Mar. 21 19:55)
+* [Link](https://drive.google.com/drive/folders/1OXmGfjAktsjgoAY9_MIvDVsZLlU4ebgv?usp=sharing) to sample preprocessing code.
+
+## Execution details
+
 ### Caveats
 
 1. Plotting part requires package `matplotlib` and `seaborn`
